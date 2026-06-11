@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pytest-synapse"
-version = "0.3.7"
+dynamic = ["version"]
 description = "A pytest plugin for OpenAPI contract test coverage"
 readme = "docs/README.md"
 license = "MIT"
@@ -14,14 +14,12 @@ authors = [
 ]
 keywords = ["pytest", "openapi", "coverage", "api", "testing", "contract"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Framework :: Pytest",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Testing",
@@ -49,6 +47,9 @@ synapse = "pytest_synapse.plugin"
 [project.urls]
 Homepage = "https://github.com/pytest-synapse/pytest-synapse"
 Documentation = "https://github.com/pytest-synapse/pytest-synapse#readme"
+
+[tool.hatch.version]
+path = "src/pytest_synapse/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pytest_synapse"]
