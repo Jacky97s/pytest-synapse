@@ -130,6 +130,19 @@ class OpenAPISpecParser:
         return self._spec.get("openapi", self._spec.get("swagger", "unknown"))
 
     @property
+    def version_major(self) -> Optional[int]:
+        """Get the major version number (2 for Swagger 2.0, 3 for OpenAPI 3.x).
+
+        Returns:
+            The leading integer of the version string, or None if unknown.
+        """
+        version = self.version
+        if not isinstance(version, str):
+            return None
+        head = version.split(".", 1)[0]
+        return int(head) if head.isdigit() else None
+
+    @property
     def title(self) -> str:
         """Get the API title."""
         info = self._spec.get("info", {})
@@ -205,7 +218,50 @@ class OpenAPISpecParser:
         operation = self.get_operation(path, method)
         if not operation:
             return False
+        if self.version_major == 2:
+            return self._swagger2_body_params(path, method) is not None
         return "requestBody" in operation
+
+    def _get_parameters(self, path: str, method: str) -> List[Dict[str, Any]]:
+        """Get the merged parameter list for an operation.
+
+        Swagger 2.0 / OpenAPI parameters can be declared on the path item
+        (shared across methods) or on the operation. Operation-level
+        parameters take precedence over path-level ones with the same
+        name/location.
+
+        Returns:
+            The merged list of parameter objects.
+        """
+        path_item = self.get_paths().get(path, {})
+        operation = self.get_operation(path, method) or {}
+
+        merged: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        for param in path_item.get("parameters", []) + operation.get("parameters", []):
+            key = (param.get("name"), param.get("in"))
+            merged[key] = param
+        return list(merged.values())
+
+    def _swagger2_body_params(
+        self, path: str, method: str
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Get the Swagger 2.0 body or formData parameters for an operation.
+
+        Returns:
+            A list with the single ``in: body`` parameter, the list of
+            ``in: formData`` parameters, or None if neither is present.
+        """
+        params = self._get_parameters(path, method)
+
+        body_params = [p for p in params if p.get("in") == "body"]
+        if body_params:
+            return body_params[:1]
+
+        form_params = [p for p in params if p.get("in") == "formData"]
+        if form_params:
+            return form_params
+
+        return None
 
     def get_response_status_codes(self, path: str, method: str) -> Set[str]:
         """Get all response status codes for an operation.
@@ -306,6 +362,15 @@ class OpenAPISpecParser:
             List of base paths without trailing slash (root base paths
             and paths containing server variables are omitted).
         """
+        # Swagger 2.0 uses a top-level basePath instead of servers[].url
+        if self.version_major == 2:
+            base_path = self._spec.get("basePath", "")
+            if isinstance(base_path, str):
+                base_path = base_path.rstrip("/")
+                if base_path and base_path != "/":
+                    return [base_path]
+            return []
+
         base_paths: List[str] = []
         for server in self.get_servers():
             url = server.get("url", "")
@@ -341,10 +406,52 @@ class OpenAPISpecParser:
         if not operation:
             return None
 
+        if self.version_major == 2:
+            return self._swagger2_request_body_schema(path, method)
+
         request_body = operation.get("requestBody", {})
         content = request_body.get("content", {})
 
         return self._extract_schema_from_content(content, content_type)
+
+    def _swagger2_request_body_schema(
+        self, path: str, method: str
+    ) -> Optional[Dict[str, Any]]:
+        """Build the request body schema for a Swagger 2.0 operation.
+
+        An ``in: body`` parameter carries an explicit schema. ``in: formData``
+        parameters are synthesised into a single object schema so that form
+        fields get the same field-level coverage as a JSON body.
+
+        Returns:
+            The schema dictionary or None if there is no body.
+        """
+        params = self._swagger2_body_params(path, method)
+        if not params:
+            return None
+
+        if params[0].get("in") == "body":
+            return params[0].get("schema")
+
+        # formData parameters → synthesise an object schema
+        properties: Dict[str, Any] = {}
+        required: List[str] = []
+        for param in params:
+            name = param.get("name")
+            if not name:
+                continue
+            field_schema: Dict[str, Any] = {}
+            for key in ("type", "format", "enum", "items"):
+                if key in param:
+                    field_schema[key] = param[key]
+            properties[name] = field_schema
+            if param.get("required"):
+                required.append(name)
+
+        schema: Dict[str, Any] = {"type": "object", "properties": properties}
+        if required:
+            schema["required"] = required
+        return schema
 
     def get_response_schema(
         self, path: str, method: str, status_code: str, content_type: Optional[str] = None

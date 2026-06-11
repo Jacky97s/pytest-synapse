@@ -1,10 +1,11 @@
 """JSON Schema validation for OpenAPI request and response bodies."""
 
+import copy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from jsonschema import Draft7Validator, ValidationError, RefResolver
+from jsonschema import Draft7Validator, Draft202012Validator, ValidationError, RefResolver
 from jsonschema.exceptions import SchemaError
 
 
@@ -159,11 +160,59 @@ class OpenAPISchemaValidator:
     def __init__(self, spec: Dict[str, Any]) -> None:
         """Initialize the validator with an OpenAPI spec.
 
+        Picks the JSON Schema dialect from the spec version (Draft 2020-12
+        for OpenAPI 3.1, Draft 7 otherwise) and rewrites the OpenAPI 3.0 /
+        Swagger 2.0 ``nullable`` keyword into a JSON-Schema-native nullable
+        type so that ``null`` values validate correctly.
+
         Args:
             spec: The full OpenAPI specification dictionary.
         """
-        self._spec = spec
-        self._resolver = RefResolver.from_schema(spec)
+        is_3_1 = str(spec.get("openapi", "")).startswith("3.1")
+        self._validator_cls = Draft202012Validator if is_3_1 else Draft7Validator
+
+        # 3.1 expresses nullability natively via type arrays; only 2.0/3.0
+        # need the nullable keyword translated.
+        if is_3_1:
+            self._spec = spec
+        else:
+            self._spec = self._normalize_nullable(copy.deepcopy(spec))
+
+        self._resolver = RefResolver.from_schema(self._spec)
+
+    def _normalize_nullable(self, node: Any) -> Any:
+        """Rewrite OpenAPI ``nullable: true`` into a JSON Schema null type.
+
+        ``{"type": "string", "nullable": true}`` becomes
+        ``{"type": ["string", "null"]}``. The ``nullable`` keyword is only
+        treated as a keyword when its value is a boolean, so a property that
+        happens to be named ``nullable`` is left untouched.
+        """
+        if isinstance(node, dict):
+            make_nullable = node.get("nullable") is True
+            result: Dict[str, Any] = {}
+            for key, value in node.items():
+                if key == "nullable" and isinstance(value, bool):
+                    continue
+                result[key] = self._normalize_nullable(value)
+            if make_nullable and isinstance(result.get("type"), str):
+                result["type"] = [result["type"], "null"]
+            return result
+        if isinstance(node, list):
+            return [self._normalize_nullable(item) for item in node]
+        return node
+
+    @staticmethod
+    def _display_type(schema_type: Any) -> str:
+        """Collapse a JSON Schema ``type`` to a single display string.
+
+        OpenAPI 3.1 allows ``type`` to be a list (e.g. ``["string", "null"]``);
+        coverage readouts want the primary non-null type.
+        """
+        if isinstance(schema_type, list):
+            non_null = [t for t in schema_type if t != "null"]
+            return non_null[0] if non_null else "null"
+        return schema_type
 
     def validate(
         self,
@@ -194,11 +243,17 @@ class OpenAPISchemaValidator:
             )
 
         try:
+            # The schema may arrive straight from the parser (un-normalized);
+            # ref targets resolve against the already-normalized spec, but an
+            # inline nullable schema passed in still needs translating.
+            if self._validator_cls is Draft7Validator:
+                schema = self._normalize_nullable(schema)
+
             # Resolve $ref if the schema is a reference
             resolved_schema = self._resolve_schema(schema)
 
             # Create validator with resolver for reference resolution
-            validator = Draft7Validator(
+            validator = self._validator_cls(
                 resolved_schema,
                 resolver=self._resolver,
             )
@@ -480,7 +535,7 @@ class OpenAPISchemaValidator:
             for prop_name, prop_schema in properties.items():
                 field_path = f"{prefix}.{prop_name}" if prefix else prop_name
                 prop_schema = self._resolve_schema(prop_schema)
-                prop_type = prop_schema.get("type", "any")
+                prop_type = self._display_type(prop_schema.get("type", "any"))
 
                 is_required = prop_name in required
                 field_info = FieldCoverageInfo(

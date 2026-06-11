@@ -42,6 +42,9 @@ When `servers[].url` contains a path prefix (e.g.
 (`/users/{userId}`). Relative server URLs are resolved against the spec
 URL when the spec is loaded from a URL.
 
+For Swagger / OpenAPI 2.0 specs, the top-level `basePath` (e.g. `/v1`)
+is used the same way, since 2.0 has no `servers` block.
+
 ## Environment constraints
 - The interceptor must run inside the pytest process to observe client calls.
 - If tests spawn subprocesses for HTTP calls, those requests may not be captured in the MVP.

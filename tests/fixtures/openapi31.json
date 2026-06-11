@@ -1,0 +1,81 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "OpenAPI 3.1 Sample API", "version": "1.0.0"},
+  "servers": [{"url": "https://api.example.com"}],
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateUserRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/User"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coordinates": {
+      "post": {
+        "operationId": "createCoordinate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Coordinate"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "OK"}
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"}
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "nickname": {"type": ["string", "null"]},
+          "kind": {"const": "user"}
+        }
+      },
+      "Coordinate": {
+        "type": "object",
+        "required": ["point"],
+        "properties": {
+          "point": {
+            "type": "array",
+            "prefixItems": [
+              {"type": "number"},
+              {"type": "number"}
+            ],
+            "items": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -214,8 +214,9 @@ class SynapseCoverageEngine:
 
             # Perform schema validation if enabled
             if self._validate_schemas and self._schema_validator and op_coverage.request_body_coverage:
-                # Get the schema for field coverage tracking
-                schema = self._schema_validator._get_request_body_schema(
+                # Extract the schema via the parser so version-specific shapes
+                # (Swagger 2.0 body / formData params) flow through validation.
+                schema = self._spec.get_request_body_schema(
                     path_template, method.lower(), event.request.content_type
                 )
                 schema_path = f"{path_template}.{method.upper()}.requestBody"
@@ -284,8 +285,9 @@ class SynapseCoverageEngine:
                 and response_coverage.schema_coverage
                 and event.response.body is not None
             ):
-                # Get the schema for field coverage tracking
-                schema = self._schema_validator._get_response_schema(
+                # Extract the schema via the parser (single source of truth,
+                # handles 2.x schema-on-response and 3.x content/media-type).
+                schema = self._spec.get_response_schema(
                     path_template, method.lower(), status_code, event.response.content_type
                 )
                 schema_path = f"{path_template}.{method.upper()}.responses.{status_code}"

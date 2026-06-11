@@ -5,7 +5,8 @@ A pytest plugin for measuring OpenAPI contract test coverage by transparently in
 ## Features
 
 - **Transparent Interception**: Automatically captures HTTP requests/responses from `requests` and `httpx` libraries without modifying test code
-- **OpenAPI Coverage**: Maps captured traffic to your OpenAPI 3.x specification to calculate coverage metrics
+- **OpenAPI Coverage**: Maps captured traffic to your OpenAPI specification to calculate coverage metrics
+- **All major spec versions**: Swagger/OpenAPI 2.0, OpenAPI 3.0.x, and OpenAPI 3.1.x
 - **Granular Reporting**: Coverage for paths, HTTP methods, request bodies, response status codes, and response schemas
 - **Multiple Output Formats**: CLI summary, detailed CLI output, JSON, CSV, and HTML reports for CI/CD integration
 - **URL Support**: Load OpenAPI specs from local files or remote URLs
@@ -268,6 +269,19 @@ spreadsheets or further processing.
 | `UNCOVERED` | The element is defined in the spec but was not observed |
 | `PARTIALLY_COVERED` | Some child elements are covered, others are not |
 | `NOT_APPLICABLE` | Not relevant (e.g., request body for GET requests) |
+
+## Supported OpenAPI Versions
+
+pytest-synapse works with all major specification versions:
+
+| Version | Notes |
+|---------|-------|
+| Swagger / OpenAPI 2.0 | `basePath` is honoured for matching; request bodies declared as `in: body` and `in: formData` parameters are detected and schema-validated |
+| OpenAPI 3.0.x | `nullable: true` fields correctly accept `null` values |
+| OpenAPI 3.1.x | Validated with the JSON Schema 2020-12 dialect (e.g. `type` arrays, `prefixItems`, `const`) |
+
+The version is detected automatically from the spec's `swagger` / `openapi`
+field — no configuration required.
 
 ## Supported HTTP Clients
 

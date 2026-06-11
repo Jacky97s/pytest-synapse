@@ -1,0 +1,51 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "OpenAPI 3.0 Nullable API", "version": "1.0.0"},
+  "servers": [{"url": "https://api.example.com"}],
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateUserRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/User"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "nickname": {"type": "string", "nullable": true}
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "nickname": {"type": "string", "nullable": true}
+        }
+      }
+    }
+  }
+}
