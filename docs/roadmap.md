@@ -2,7 +2,7 @@
 
 > For detailed feature specifications, see [FEATURE_PLAN.md](./FEATURE_PLAN.md)
 
-## Current Status: v0.7.0 (Beta)
+## Current Status: v1.0.0
 
 Core functionality working:
 - Transparent HTTP interception for `requests` and `httpx` (sync + async)
@@ -78,7 +78,7 @@ Core functionality working:
 
 ---
 
-## v1.0.0 - Production Ready (Next)
+## Post-1.0 Backlog
 
 **Goal**: Stable, polished, enterprise-ready.
 

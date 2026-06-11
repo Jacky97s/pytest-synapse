@@ -12,10 +12,10 @@ A pytest plugin for measuring OpenAPI contract test coverage by transparently in
 
 ## Installation
 
-### From TestPyPI
+### From PyPI
 
 ```bash
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytest-synapse
+pip install pytest-synapse
 ```
 
 ### From Source
