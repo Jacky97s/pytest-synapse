@@ -294,3 +294,87 @@ class OpenAPISpecParser:
             parsed = urlparse(url)
             return parsed.path.rstrip("/") or "/"
         return "/"
+
+    def get_request_body_schema(
+        self, path: str, method: str, content_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Get the request body schema for an operation.
+
+        Args:
+            path: The path template.
+            method: The HTTP method.
+            content_type: Optional content type to match.
+
+        Returns:
+            The schema dictionary or None if not found.
+        """
+        operation = self.get_operation(path, method)
+        if not operation:
+            return None
+
+        request_body = operation.get("requestBody", {})
+        content = request_body.get("content", {})
+
+        return self._extract_schema_from_content(content, content_type)
+
+    def get_response_schema(
+        self, path: str, method: str, status_code: str, content_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Get the response schema for an operation and status code.
+
+        Args:
+            path: The path template.
+            method: The HTTP method.
+            status_code: The response status code.
+            content_type: Optional content type to match.
+
+        Returns:
+            The schema dictionary or None if not found.
+        """
+        operation = self.get_operation(path, method)
+        if not operation:
+            return None
+
+        responses = operation.get("responses", {})
+        response = responses.get(status_code, responses.get("default", {}))
+        content = response.get("content", {})
+
+        # Handle OpenAPI 2.x schema directly on response
+        if "schema" in response and not content:
+            return response["schema"]
+
+        return self._extract_schema_from_content(content, content_type)
+
+    def _extract_schema_from_content(
+        self, content: Dict[str, Any], content_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Extract schema from content object.
+
+        Args:
+            content: The content object from OpenAPI spec.
+            content_type: Optional content type to match.
+
+        Returns:
+            The schema dictionary or None if not found.
+        """
+        if not content:
+            return None
+
+        # Try to match specific content type
+        if content_type:
+            base_type = content_type.split(";")[0].strip().lower()
+            if base_type in content:
+                return content[base_type].get("schema")
+            for ct, media in content.items():
+                if ct.lower() == base_type or ct == "*/*":
+                    return media.get("schema")
+
+        # Default to application/json or first available
+        if "application/json" in content:
+            return content["application/json"].get("schema")
+
+        for media in content.values():
+            if "schema" in media:
+                return media["schema"]
+
+        return None

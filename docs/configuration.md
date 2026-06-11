@@ -37,3 +37,12 @@ The parser automatically detects the format based on:
 ## Environment constraints
 - The interceptor must run inside the pytest process to observe client calls.
 - If tests spawn subprocesses for HTTP calls, those requests may not be captured in the MVP.
+
+## Planned CLI Options
+
+See [FEATURE_PLAN.md](./FEATURE_PLAN.md) for upcoming configuration options including:
+- `--synapse-coverage-threshold`: Fail if coverage below threshold
+- `--synapse-baseline`: Compare against baseline for regression detection
+- `--synapse-badge`: Generate coverage badge (SVG)
+- `--synapse-fail-on-violations`: Fail tests on contract violations
+- Configuration file support (`.synapse.yaml`)

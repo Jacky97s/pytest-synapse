@@ -12,10 +12,10 @@ A pytest plugin for measuring OpenAPI contract test coverage by transparently in
 
 ## Installation
 
-### From PyPI (when published)
+### From TestPyPI
 
 ```bash
-pip install pytest-synapse
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytest-synapse
 ```
 
 ### From Source
@@ -247,7 +247,8 @@ Generates a machine-readable JSON report:
 pytest-synapse transparently intercepts traffic from:
 
 - **requests** - `requests.get()`, `requests.post()`, etc.
-- **httpx** (sync mode) - `httpx.get()`, `httpx.post()`, etc.
+- **httpx** (sync & async) - `httpx.get()`, `httpx.AsyncClient()`, etc.
+- **aiohttp** - `aiohttp.ClientSession()` for async HTTP
 
 The interception happens at a high level, after TLS decryption, so HTTPS traffic is fully supported without any certificate configuration.
 
@@ -314,8 +315,6 @@ print(renderer.render_cli_summary())
 ## Limitations
 
 - Only captures HTTP traffic from the pytest process (not subprocesses)
-- httpx async mode is not yet supported
-- Does not validate schema content beyond presence (deep schema coverage planned)
 
 ## Development
 

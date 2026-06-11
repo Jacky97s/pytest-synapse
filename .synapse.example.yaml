@@ -1,0 +1,84 @@
+# pytest-synapse Configuration File
+# Copy this file to .synapse.yaml in your project root
+# All settings can be overridden by CLI arguments
+
+# OpenAPI specification file path
+spec: ./openapi.yaml
+
+# Coverage thresholds (fail if below these percentages)
+thresholds:
+  operations: 80      # Minimum operation coverage percentage
+  paths: 90           # Minimum path coverage percentage
+  schemas: 70         # Minimum schema coverage percentage
+
+# Paths/methods to ignore in coverage calculation
+ignore:
+  paths:
+    - /health         # Health check endpoints
+    - /metrics        # Prometheus/metrics endpoints
+    - /internal/*     # Internal endpoints (glob pattern)
+    - /docs/*         # Documentation endpoints
+  methods:
+    - OPTIONS         # Preflight requests
+    - HEAD            # HEAD requests
+  status_codes:
+    - 500             # Don't require 500 error coverage
+    - 503             # Service unavailable
+
+# Report configuration
+reporting:
+  format: html                  # Output format: json, csv, html, cli
+  output: coverage-report.html  # Output file path
+  include_suggestions: true     # Include coverage improvement suggestions
+
+# CI/CD configuration
+ci:
+  fail_on_regression: true      # Fail if coverage regresses vs baseline
+  baseline: .synapse-baseline.json  # Baseline file for comparison
+  github_comment: false         # Post coverage comment on GitHub PRs
+
+# Notification settings (optional)
+notifications:
+  slack:
+    webhook: ${SLACK_WEBHOOK_URL}  # Environment variable reference
+    on:
+      - coverage_dropped          # Notify when coverage drops
+      - new_uncovered_critical    # Notify on new uncovered critical endpoints
+      - contract_violation        # Notify on schema violations
+
+  # Teams integration (future)
+  # teams:
+  #   webhook: ${TEAMS_WEBHOOK_URL}
+
+# Risk assessment configuration
+risk:
+  # Custom high-risk path patterns (in addition to defaults)
+  high_risk_paths:
+    - /api/v1/admin/*
+    - /api/v1/billing/*
+    - /api/v1/payments/*
+
+  # Methods to always consider high risk when uncovered
+  high_risk_methods:
+    - DELETE
+    - POST
+    - PUT
+
+# Debug settings
+debug:
+  enabled: false              # Enable debug logging
+  log_requests: false         # Log all intercepted requests
+  log_matching: false         # Log endpoint matching details
+
+# Schema validation (strict mode)
+strict:
+  enabled: false              # Fail on contract violations
+  allow_extra_fields: true    # Allow extra fields in responses
+  validate_request: true      # Validate request bodies
+  validate_response: true     # Validate response bodies
+
+# Test generation settings
+generate_tests:
+  output: generated_tests.py  # Output file for generated test stubs
+  base_url: http://localhost:8000  # Base URL for generated tests
+  include_error_cases: true   # Generate tests for error responses

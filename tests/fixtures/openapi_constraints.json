@@ -1,0 +1,895 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Comprehensive Constraints API",
+    "version": "1.0.0",
+    "description": "API demonstrating all schema constraint types for field-level coverage testing"
+  },
+  "servers": [
+    {"url": "http://localhost:8000"}
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "summary": "List products with pagination",
+        "operationId": "listProducts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {"type": "integer", "minimum": 1, "default": 1}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["electronics", "clothing", "food", "books", "other"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a product",
+        "operationId": "createProduct",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateProductRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Product"}
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ValidationError"}
+              }
+            }
+          },
+          "409": {
+            "description": "Product already exists",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{productId}": {
+      "get": {
+        "summary": "Get product by ID",
+        "operationId": "getProduct",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Product"}
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update product",
+        "operationId": "updateProduct",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateProductRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Product"}
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ValidationError"}
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete product",
+        "operationId": "deleteProduct",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product deleted"
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "summary": "Create an order",
+        "operationId": "createOrder",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateOrderRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ValidationError"}
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "operationId": "getUserProfile",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer", "minimum": 1}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/UserProfile"}
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user profile",
+        "operationId": "updateUserProfile",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer", "minimum": 1}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/UserProfile"}
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ValidationError"}
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "required": ["id", "name", "price", "category", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique product identifier"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Product name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 999999.99,
+            "description": "Product price"
+          },
+          "discountPrice": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999.99
+          },
+          "category": {
+            "type": "string",
+            "enum": ["electronics", "clothing", "food", "books", "other"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "discontinued", "out_of_stock"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1, "maxLength": 50},
+            "minItems": 0,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "sku": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,4}-[0-9]{4,8}$",
+            "description": "Stock keeping unit"
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 1000,
+            "description": "Weight in kg"
+          },
+          "dimensions": {
+            "$ref": "#/components/schemas/Dimensions"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "required": ["name", "price", "category"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 999999.99
+          },
+          "category": {
+            "type": "string",
+            "enum": ["electronics", "clothing", "food", "books", "other"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1, "maxLength": 50},
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "sku": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,4}-[0-9]{4,8}$"
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 1000
+          },
+          "dimensions": {
+            "$ref": "#/components/schemas/Dimensions"
+          }
+        }
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 999999.99
+          },
+          "discountPrice": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999.99
+          },
+          "category": {
+            "type": "string",
+            "enum": ["electronics", "clothing", "food", "books", "other"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "discontinued", "out_of_stock"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1, "maxLength": 50},
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "inventory": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Dimensions": {
+        "type": "object",
+        "required": ["length", "width", "height"],
+        "properties": {
+          "length": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Length in cm"
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Width in cm"
+          },
+          "height": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Height in cm"
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["cm", "in", "m"],
+            "default": "cm"
+          }
+        }
+      },
+      "ProductList": {
+        "type": "object",
+        "required": ["items", "total", "page", "limit"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/Product"}
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "required": ["id", "customerId", "items", "status", "total"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/OrderItem"},
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "default": "USD"
+          },
+          "shippingAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": ["customerId", "items", "shippingAddress"],
+        "properties": {
+          "customerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/OrderItemRequest"},
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "shippingAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "couponCode": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{5,15}$"
+          }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "required": ["productId", "quantity", "unitPrice"],
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Discount percentage"
+          }
+        }
+      },
+      "OrderItemRequest": {
+        "type": "object",
+        "required": ["productId", "quantity"],
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "required": ["street", "city", "country", "postalCode"],
+        "properties": {
+          "street": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "street2": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 country code"
+          },
+          "postalCode": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 20
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+?[0-9\\s\\-()]{7,20}$"
+          }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "required": ["id", "email", "username", "accountType"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 30,
+            "pattern": "^[a-z0-9_-]+$"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "accountType": {
+            "type": "string",
+            "enum": ["free", "basic", "premium", "enterprise"]
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/UserPreferences"
+          },
+          "socialLinks": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/SocialLink"},
+            "maxItems": 10
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 150
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "multipleOf": 0.5
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/UserPreferences"
+          },
+          "socialLinks": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/SocialLink"},
+            "maxItems": 10
+          }
+        }
+      },
+      "UserPreferences": {
+        "type": "object",
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": ["light", "dark", "auto"]
+          },
+          "language": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+            "description": "BCP 47 language tag"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "emailNotifications": {
+            "type": "boolean",
+            "default": true
+          },
+          "pushNotifications": {
+            "type": "boolean",
+            "default": false
+          },
+          "newsletter": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "SocialLink": {
+        "type": "object",
+        "required": ["platform", "url"],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": ["twitter", "facebook", "instagram", "linkedin", "github", "youtube", "tiktok", "other"]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "username": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["message", "code"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z_]+$"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": ["message", "errors"],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["field", "message"],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                }
+              }
+            },
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

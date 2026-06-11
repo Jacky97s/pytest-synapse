@@ -205,3 +205,157 @@ class TestEndToEndWorkflow:
         # But it doesn't affect coverage since it doesn't match any spec path
         summary = engine.calculate_summary()
         assert summary.covered_operations == 0
+
+    def test_schema_validation_integration(self, spec_path, tmp_path):
+        """Test schema validation with valid and invalid request/response bodies."""
+        import requests
+        import responses
+
+        logger = SynapseFlowLogger()
+        interceptor = SynapseInterceptor()
+        interceptor.activate(logger)
+
+        with responses.RequestsMock() as rsps:
+            # Valid request body, valid response
+            rsps.add(
+                responses.POST,
+                "http://localhost:8000/users",
+                json={"id": 1, "name": "Alice", "email": "alice@example.com"},
+                status=201,
+            )
+            # Invalid request body (missing email), returns 400
+            rsps.add(
+                responses.POST,
+                "http://localhost:8000/users",
+                json={"message": "Missing required field: email"},
+                status=400,
+            )
+            # Valid GET response
+            rsps.add(
+                responses.GET,
+                "http://localhost:8000/users",
+                json=[{"id": 1, "name": "Alice", "email": "alice@example.com"}],
+                status=200,
+            )
+            # Invalid GET response (missing required field)
+            rsps.add(
+                responses.GET,
+                "http://localhost:8000/users",
+                json=[{"id": 1, "name": "Alice"}],  # Missing email
+                status=200,
+            )
+
+            # Test 1: Valid request body
+            logger.set_current_test("test::create_user_valid")
+            requests.post(
+                "http://localhost:8000/users",
+                json={"name": "Alice", "email": "alice@example.com"},
+            )
+
+            # Test 2: Invalid request body (missing email)
+            logger.set_current_test("test::create_user_invalid")
+            requests.post(
+                "http://localhost:8000/users",
+                json={"name": "Bob"},  # Missing email
+            )
+
+            # Test 3: Valid response body
+            logger.set_current_test("test::list_users_valid")
+            requests.get("http://localhost:8000/users")
+
+            # Test 4: Invalid response body
+            logger.set_current_test("test::list_users_invalid")
+            requests.get("http://localhost:8000/users")
+
+        interceptor.deactivate()
+
+        events = logger.get_events()
+        assert len(events) == 4
+
+        spec = OpenAPISpecParser(spec_path)
+        engine = SynapseCoverageEngine(spec, validate_schemas=True)
+        engine.process_events(events)
+
+        summary = engine.calculate_summary()
+
+        # Verify request body validation stats
+        # 2 request bodies sent (one valid, one invalid per schema)
+        assert summary.total_request_body_validations == 2
+        assert summary.request_body_valid_count == 1  # First POST has valid body
+        assert summary.request_body_invalid_count == 1  # Second POST has invalid body
+
+        # Verify response schema validation stats
+        # 4 responses with schemas (201, 400, 200, 200)
+        assert summary.total_response_schema_validations >= 2  # At least the GET responses
+        assert summary.response_schema_valid_count >= 1  # First GET response is valid
+        assert summary.response_schema_invalid_count >= 1  # Fourth response is invalid
+
+        # Generate report
+        renderer = ReportRenderer(engine)
+        report = renderer.generate_report()
+
+        # Verify validation errors are captured
+        validation_errors = report.validation_errors
+        # Should have errors for request body and/or response schema
+        assert len(validation_errors) > 0 or (
+            summary.request_body_invalid_count > 0 or
+            summary.response_schema_invalid_count > 0
+        )
+
+        # Write JSON report and verify schema_validation section
+        report_path = tmp_path / "coverage_validation.json"
+        renderer.write_json_report(str(report_path))
+
+        import json
+        report_data = json.loads(report_path.read_text())
+        assert "schema_validation" in report_data["summary"]
+        assert "request_body" in report_data["summary"]["schema_validation"]
+        assert "response_schema" in report_data["summary"]["schema_validation"]
+
+        # Verify CLI output includes validation info
+        cli_output = renderer.render_cli_summary()
+        if summary.total_request_body_validations > 0 or summary.total_response_schema_validations > 0:
+            assert "Schema Validation" in cli_output
+
+    def test_schema_validation_disabled(self, spec_path):
+        """Test that schema validation can be disabled."""
+        import requests
+        import responses
+
+        logger = SynapseFlowLogger()
+        interceptor = SynapseInterceptor()
+        interceptor.activate(logger)
+
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                "http://localhost:8000/users",
+                json={"id": 1, "name": "Alice", "email": "alice@example.com"},
+                status=201,
+            )
+
+            logger.set_current_test("test::create_user")
+            requests.post(
+                "http://localhost:8000/users",
+                json={"name": "Alice", "email": "alice@example.com"},
+            )
+
+        interceptor.deactivate()
+
+        events = logger.get_events()
+        spec = OpenAPISpecParser(spec_path)
+
+        # Create engine with validation disabled
+        engine = SynapseCoverageEngine(spec, validate_schemas=False)
+        engine.process_events(events)
+
+        summary = engine.calculate_summary()
+
+        # Coverage should still work
+        assert summary.covered_operations >= 1
+
+        # But validation counts should be zero
+        assert summary.request_body_valid_count == 0
+        assert summary.request_body_invalid_count == 0
+        assert summary.response_schema_valid_count == 0
+        assert summary.response_schema_invalid_count == 0

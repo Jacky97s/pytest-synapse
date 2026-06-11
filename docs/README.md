@@ -1,92 +1,119 @@
-# pytest-synapse Documentation
+# pytest-synapse
 
-Welcome to the pytest-synapse documentation. This folder contains comprehensive guides for installing, configuring, and using pytest-synapse to measure OpenAPI contract test coverage.
-
-## What is pytest-synapse?
-
-pytest-synapse is a pytest plugin that measures OpenAPI contract test coverage by transparently intercepting HTTP traffic during test execution. It bridges dynamic test execution with a static OpenAPI definition, computing coverage for paths, methods, request bodies, response status codes, and response schemas.
+A pytest plugin for measuring OpenAPI contract test coverage by transparently intercepting HTTP traffic during test execution.
 
 ## Key Features
 
-- **Transparent Interception**: Automatically captures HTTP requests/responses from `requests` and `httpx` libraries without modifying test code
+- **Transparent Interception**: Automatically captures HTTP requests/responses from `requests`, `httpx`, and `aiohttp` without modifying test code
 - **OpenAPI Coverage**: Maps captured traffic to your OpenAPI 3.x specification
-- **Granular Metrics**: Coverage for paths, HTTP methods, request bodies, response status codes, and response schemas
-- **Multiple Output Formats**: CLI summary, detailed CLI output, and JSON reports
-- **URL Support**: Load OpenAPI specs from local files or remote URLs
-- **HTTPS Friendly**: Captures decrypted payloads above TLS layer
+- **Granular Metrics**: Coverage for paths, HTTP methods, request bodies, response status codes, response schemas, and field-level constraints
+- **Risk Assessment**: Identifies high-risk untested endpoints with detailed risk scoring
+- **Multiple Output Formats**: CLI, JSON, CSV, and HTML reports with interactive dashboards
+- **CI/CD Integration**: Fail thresholds, baseline comparison, JUnit XML output, GitHub PR comments
+- **Field & Constraint Coverage**: Track coverage of required fields, enums, string patterns, numeric ranges, and more
 
-## Quick Links
-
-| Document | Description |
-|----------|-------------|
-| [Usage Guide](usage.md) | Complete installation and implementation guide |
-| [Configuration](configuration.md) | CLI options and pytest.ini settings |
-| [Architecture](architecture.md) | System design and component overview |
-| [Reporting](reporting.md) | Coverage report formats and metrics |
-| [Roadmap](roadmap.md) | Future features and enhancements |
-
-## Getting Started
-
-### 1. Install
+## Installation
 
 ```bash
 pip install pytest-synapse
 ```
 
-### 2. Run with OpenAPI Spec
+## Quick Start
 
 ```bash
+# Basic usage
 pytest --openapi-spec=./openapi.yaml
+
+# With HTML report including risk assessment
+pytest --openapi-spec=./openapi.yaml --synapse-report=report.html --synapse-report-format=html
+
+# With coverage threshold
+pytest --openapi-spec=./openapi.yaml --synapse-fail-under=80
 ```
 
-### 3. View Coverage
+## Coverage Output
 
 ```
 ==================================================
 OpenAPI Coverage Report
 ==================================================
 
-Paths:            2/2 (100.0%)
-Operations:       3/3 (100.0%)
-Request Bodies:   1/1 (100.0%)
-Response Schemas: 5/5 (100.0%)
+Paths:            3/5 (60.0%)
+Operations:       5/8 (62.5%)
+Request Bodies:   2/3 (66.7%)
+Response Schemas: 7/12 (58.3%)
+
+==================================================
+API RISK ASSESSMENT
+==================================================
+
+RISK SUMMARY
+------------------------------------------------------------
+  Total Endpoints:     8
+  High Risk:           2
+  Medium Risk:         3
+  Low Risk:            3
+  Risk Score:          45.0/100
+
+CRITICAL GAPS (High-risk + Uncovered):
+  [!] DELETE /users/{id}
+  [!] POST /payments
 ```
 
-## Documentation Index
+## CLI Options
 
-### Core Documentation
+| Option | Description |
+|--------|-------------|
+| `--openapi-spec` | Path to OpenAPI spec file or URL |
+| `--synapse-report` | Output path for coverage report |
+| `--synapse-report-format` | Format: `json`, `csv`, `html`, `cli_summary`, `cli_detailed` |
+| `--synapse-fail-under` | Fail if coverage below threshold |
+| `--synapse-risk-report` | Include risk assessment in CLI output |
+| `--synapse-risk-report-output` | Export risk report to JSON file |
+| `--synapse-strict` | Fail on contract violations |
+| `--synapse-debug` | Enable debug logging |
 
-- **[Usage Guide](usage.md)** - Step-by-step instructions for installation, basic usage, and integration with your test suite. Includes examples for `requests` and `httpx` libraries, mock library integration, and CI/CD setup.
+## Configuration File
 
-- **[Configuration](configuration.md)** - All configuration options including CLI flags, pytest.ini settings, and URL loading for remote OpenAPI specs.
+Create `.synapse.yaml` in your project root:
 
-### Technical Documentation
+```yaml
+spec: ./openapi.yaml
 
-- **[Architecture](architecture.md)** - Technical overview of the system architecture, including the interceptor layer, flow logger, coverage engine, and report renderer.
+thresholds:
+  operations: 80
+  paths: 90
 
-- **[Reporting](reporting.md)** - Detailed explanation of coverage report formats, metrics definitions, and how to interpret results.
+ignore:
+  paths:
+    - /health
+    - /metrics
+  methods:
+    - OPTIONS
 
-### Planning
-
-- **[Roadmap](roadmap.md)** - Planned features and future enhancements including async httpx support, deep schema validation, and more.
-
-## Guiding Principles
-
-1. **Transparent Interception**: No changes to test code or HTTP clients required
-2. **HTTPS Friendly**: Capture decrypted payloads above the TLS layer
-3. **Adaptive Support**: Automatically detect and patch popular clients
-4. **Normalized Data Model**: Unified traffic representation across clients
-5. **Actionable Coverage**: Clear reporting of what is covered and what is not
+risk:
+  high_risk_paths:
+    - /api/v1/admin/*
+    - /api/v1/payments/*
+  high_risk_methods:
+    - DELETE
+    - POST
+```
 
 ## Supported HTTP Clients
 
 | Client | Sync | Async |
 |--------|------|-------|
 | requests | Yes | N/A |
-| httpx | Yes | Planned |
+| httpx | Yes | Yes |
+| aiohttp | N/A | Yes |
 
-## Need Help?
+## Documentation
 
-- Check the [Usage Guide](usage.md) for detailed examples
-- Review [Configuration](configuration.md) for all available options
-- See the main [README](../README.md) for quick start instructions
+- [Usage Guide](https://github.com/pytest-synapse/pytest-synapse#usage)
+- [Configuration](https://github.com/pytest-synapse/pytest-synapse#configuration)
+- [Roadmap](https://github.com/pytest-synapse/pytest-synapse#roadmap)
+
+## License
+
+MIT License
