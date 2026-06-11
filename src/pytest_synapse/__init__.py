@@ -1,6 +1,6 @@
 """pytest-synapse: OpenAPI contract test coverage for pytest."""
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 from pytest_synapse.types import (
     CapturedTrafficEvent,
