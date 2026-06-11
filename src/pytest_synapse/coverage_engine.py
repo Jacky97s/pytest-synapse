@@ -42,6 +42,7 @@ class SynapseCoverageEngine:
         self._validate_schemas = validate_schemas
         self._coverage_map: Dict[str, PathCoverage] = {}
         self._url_map: Optional[Map] = None
+        self._base_paths: List[str] = spec.get_base_paths()
         self._schema_validator: Optional[OpenAPISchemaValidator] = None
 
         if validate_schemas:
@@ -118,6 +119,10 @@ class SynapseCoverageEngine:
     def match_request(self, request: HttpRequest) -> Optional[Tuple[str, str]]:
         """Match a request to an OpenAPI operation.
 
+        The path is matched as captured first, then with each server base
+        path stripped, so requests sent to servers with a path prefix
+        (e.g. https://api.example.com/api/v2) still match spec path keys.
+
         Args:
             request: The HTTP request to match.
 
@@ -129,11 +134,23 @@ class SynapseCoverageEngine:
 
         adapter = self._url_map.bind("localhost")
 
-        try:
-            endpoint, _ = adapter.match(request.path, method=request.method)
-            return (endpoint, request.method)
-        except (RequestRedirect, MethodNotAllowed, Exception):
-            return None
+        for path in self._candidate_paths(request.path):
+            try:
+                endpoint, _ = adapter.match(path, method=request.method)
+                return (endpoint, request.method)
+            except (RequestRedirect, MethodNotAllowed, Exception):
+                continue
+        return None
+
+    def _candidate_paths(self, path: str) -> List[str]:
+        """Paths to try when matching: as captured, then base-path-stripped."""
+        candidates = [path]
+        for base in self._base_paths:
+            if path == base:
+                candidates.append("/")
+            elif path.startswith(base + "/"):
+                candidates.append(path[len(base):])
+        return candidates
 
     def process_events(self, events: List[CapturedTrafficEvent]) -> None:
         """Process a list of captured traffic events.

@@ -34,6 +34,14 @@ The parser automatically detects the format based on:
 2. URL file extension (.json, .yaml, .yml)
 3. Content parsing (tries JSON first, then YAML)
 
+## Server base paths
+
+When `servers[].url` contains a path prefix (e.g.
+`https://api.example.com/api/v2`), requests captured under that prefix
+(`GET /api/v2/users/1`) are matched to the spec path keys
+(`/users/{userId}`). Relative server URLs are resolved against the spec
+URL when the spec is loaded from a URL.
+
 ## Environment constraints
 - The interceptor must run inside the pytest process to observe client calls.
 - If tests spawn subprocesses for HTTP calls, those requests may not be captured in the MVP.

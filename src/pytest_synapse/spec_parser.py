@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
@@ -294,6 +294,35 @@ class OpenAPISpecParser:
             parsed = urlparse(url)
             return parsed.path.rstrip("/") or "/"
         return "/"
+
+    def get_base_paths(self) -> List[str]:
+        """Get the distinct non-root base paths across all servers.
+
+        Server URLs like "https://api.example.com/api/v2" yield "/api/v2".
+        Relative server URLs are resolved against the spec URL when the
+        spec was loaded from a URL.
+
+        Returns:
+            List of base paths without trailing slash (root base paths
+            and paths containing server variables are omitted).
+        """
+        base_paths: List[str] = []
+        for server in self.get_servers():
+            url = server.get("url", "")
+            if not url:
+                continue
+            if self._source_url:
+                url = urljoin(self._source_url, url)
+            path = urlparse(url).path
+            if "{" in path:
+                # Server variables in the path can't be stripped literally
+                continue
+            path = path.rstrip("/")
+            if path and not path.startswith("/"):
+                path = "/" + path
+            if path and path not in base_paths:
+                base_paths.append(path)
+        return base_paths
 
     def get_request_body_schema(
         self, path: str, method: str, content_type: Optional[str] = None

@@ -175,6 +175,13 @@ pytest --openapi-spec=https://api.example.com/openapi.json
 pytest --openapi-spec=https://petstore.swagger.io/v2/swagger.yaml
 ```
 
+### Server Base Paths
+
+If the spec's `servers` entries include a path prefix (e.g.
+`https://api.example.com/api/v2`), captured requests such as
+`GET /api/v2/users/1` are automatically matched to the spec path keys
+(`/users/{userId}`) — the base path is stripped during matching.
+
 ## Report Formats
 
 ### CLI Summary (default)
