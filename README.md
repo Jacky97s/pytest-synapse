@@ -7,7 +7,7 @@ A pytest plugin for measuring OpenAPI contract test coverage by transparently in
 - **Transparent Interception**: Automatically captures HTTP requests/responses from `requests` and `httpx` libraries without modifying test code
 - **OpenAPI Coverage**: Maps captured traffic to your OpenAPI 3.x specification to calculate coverage metrics
 - **Granular Reporting**: Coverage for paths, HTTP methods, request bodies, response status codes, and response schemas
-- **Multiple Output Formats**: CLI summary, detailed CLI output, and JSON reports for CI/CD integration
+- **Multiple Output Formats**: CLI summary, detailed CLI output, JSON, CSV, and HTML reports for CI/CD integration
 - **URL Support**: Load OpenAPI specs from local files or remote URLs
 
 ## Installation
@@ -152,7 +152,7 @@ Response Schemas: 3/3 (100.0%)
 |--------|-------------|
 | `--openapi-spec` | Path to OpenAPI spec file or URL (required for coverage) |
 | `--synapse-report` | Output path for the coverage report file |
-| `--synapse-report-format` | Report format: `cli_summary`, `cli_detailed`, or `json` |
+| `--synapse-report-format` | Report format: `cli_summary`, `cli_detailed`, `json`, `csv`, `html`, or `junit` |
 | `--synapse-ignore-paths` | Comma-separated list of paths to exclude |
 
 ### pytest.ini Configuration
@@ -239,6 +239,26 @@ Generates a machine-readable JSON report:
   "uncovered_items_list": [...]
 }
 ```
+
+### HTML Report
+
+```bash
+pytest --openapi-spec=./openapi.yaml --synapse-report=report.html --synapse-report-format=html
+```
+
+Generates a self-contained HTML page (no external assets) with summary
+cards, a per-operation coverage table, coverage suggestions, and the API
+risk assessment — ready to attach as a CI artifact and open directly in
+a browser.
+
+### CSV Report
+
+```bash
+pytest --openapi-spec=./openapi.yaml --synapse-report=coverage.csv --synapse-report-format=csv
+```
+
+One row per path/method/status-code combination, convenient for
+spreadsheets or further processing.
 
 ## Coverage Status Values
 

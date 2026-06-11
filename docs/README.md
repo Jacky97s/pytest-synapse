@@ -8,7 +8,7 @@ A pytest plugin for measuring OpenAPI contract test coverage by transparently in
 - **OpenAPI Coverage**: Maps captured traffic to your OpenAPI 3.x specification
 - **Granular Metrics**: Coverage for paths, HTTP methods, request bodies, response status codes, response schemas, and field-level constraints
 - **Risk Assessment**: Identifies high-risk untested endpoints with detailed risk scoring
-- **Multiple Output Formats**: CLI, JSON, CSV, and HTML reports with interactive dashboards
+- **Multiple Output Formats**: CLI, JSON, CSV, and HTML reports
 - **CI/CD Integration**: Fail thresholds, baseline comparison, JUnit XML output, GitHub PR comments
 - **Field & Constraint Coverage**: Track coverage of required fields, enums, string patterns, numeric ranges, and more
 
