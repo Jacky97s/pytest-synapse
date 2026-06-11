@@ -45,8 +45,8 @@ dev = [
 synapse = "pytest_synapse.plugin"
 
 [project.urls]
-Homepage = "https://github.com/pytest-synapse/pytest-synapse"
-Documentation = "https://github.com/pytest-synapse/pytest-synapse#readme"
+Homepage = "https://github.com/Jacky97s/pytest-synapse"
+Documentation = "https://github.com/Jacky97s/pytest-synapse#readme"
 
 [tool.hatch.version]
 path = "src/pytest_synapse/__init__.py"

@@ -21,7 +21,7 @@ pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/
 ### From Source
 
 ```bash
-git clone https://github.com/pytest-synapse/pytest-synapse.git
+git clone https://github.com/Jacky97s/pytest-synapse.git
 cd pytest-synapse
 pip install -e ".[dev]"
 ```

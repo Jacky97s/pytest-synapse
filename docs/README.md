@@ -110,9 +110,9 @@ risk:
 
 ## Documentation
 
-- [Usage Guide](https://github.com/pytest-synapse/pytest-synapse#usage)
-- [Configuration](https://github.com/pytest-synapse/pytest-synapse#configuration)
-- [Roadmap](https://github.com/pytest-synapse/pytest-synapse#roadmap)
+- [Usage Guide](https://github.com/Jacky97s/pytest-synapse#usage)
+- [Configuration](https://github.com/Jacky97s/pytest-synapse#configuration)
+- [Roadmap](https://github.com/Jacky97s/pytest-synapse#roadmap)
 
 ## License
 
